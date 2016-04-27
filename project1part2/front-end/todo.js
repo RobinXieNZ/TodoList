@@ -1,10 +1,58 @@
 $(document).ready(function(e) {
     var needToPuff;
     var taskName;
+    var server = 'http://localhost:8080';  
+    var taskList;
+
+    var redraw = function(){
+        for(var task in taskList){
+            console.log(task);
+            var json = $.parseJSON(taskList[task]);
+            if(json.done === false){
+                addUndoTask(json.contents);
+            }else{
+                addDoneTask(json.contents);
+            }
+        }
+    }
+
+    var addUndoTask = function(taskName){
+        var taskHTML = '<li><span class="done">%</span>';
+        taskHTML += '<span class="delete">x</span>';
+        taskHTML += '<span class="task"></span></li>';
+
+        var $newTask = $(taskHTML); 
+        $newTask.find('.task').text(taskName);
+        $newTask.hide();
+        $('#todo-list').prepend($newTask);
+        $newTask.show('clip',250).effect('highlight',1000);
+    }
+
+    var addDoneTask = function(taskName){
+        var taskHTML = '<li><span class="done">%</span>';
+        taskHTML += '<span class="delete">x</span>';
+        taskHTML += '<span class="task"></span></li>';
+
+        var $newTask = $(taskHTML); 
+        $newTask.find('.task').text(taskName);
+        $newTask.hide();
+        $('#completed-list').prepend($newTask);
+        $newTask.show('clip',250).effect('highlight',1000);
+    }
+
+    var taskDone(task){
+        
+    }
+
+    $.get(server+'/', function(data) {
+        taskList = JSON.parse(data);
+    }).then(redraw);
+
     $('#add-todo').button({
         icons: { primary: "ui-icon-circle-plus" }}).click(
         function() { $('#new-todo').dialog('open');
-        });
+    });
+
     $('#new-todo').dialog({
         modal : true, autoOpen : false, buttons : {
             "Add task" : function () {
@@ -14,7 +62,8 @@ $(document).ready(function(e) {
                 taskHTML += '<span class="delete">x</span>';
                 taskHTML += '<span class="task"></span></li>';
 
-                var $newTask = $(taskHTML); $newTask.find('.task').text(taskName);
+                var $newTask = $(taskHTML); 
+                $newTask.find('.task').text(taskName);
                 $newTask.hide();
                 $('#todo-list').prepend($newTask);
                 $newTask.show('clip',250).effect('highlight',1000);
@@ -50,12 +99,14 @@ $(document).ready(function(e) {
         $this.slideDown();
         });
     });
+
     $('.sortlist').sortable({
         connectWith : '.sortlist',
         cursor : 'pointer',
         placeholder : 'ui-state-highlight',
-        cancel : '.delete,.done'
+        cancel : '.delete.done'
     });
+
     $('.sortlist').on('click','.delete',function() {
         $('#confirm-delete').dialog('open');
         needToPuff = $(this).parent('li');
